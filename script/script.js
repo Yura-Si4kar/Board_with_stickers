@@ -8,10 +8,10 @@ const addButton = document.querySelector('.add_btn');
 const textArea = document.querySelector('.stickers__text');
 
 addButton.addEventListener('click', addNewStiker);
-document.addEventListener('focusout', saveNewStikerText);
+document.addEventListener('focusout', saveNewStikersText);
 stickersBlock.addEventListener('click', onClickAction);
 
-let stickersList = {};
+let stickersList = [];
 
 init();
 
@@ -28,10 +28,10 @@ function fetchList() {
     })
 }
 
-function addNewStiker(sticker) {
+function addNewStiker(stickers) {
    fetch(STIKERS_URL, {
         method: 'POST',
-        body: JSON.stringify(sticker),
+        body: JSON.stringify(stickers),
         headers: {
             'Content-Type': 'application/json',
         },
@@ -40,28 +40,31 @@ function addNewStiker(sticker) {
     });
 }
 
-function saveNewStikerText(e, sticker) {
+function saveNewStikersText(e) {
     id = getStickerId(e.target);
 
         fetch(STIKERS_URL + id, {
         method: 'PUT',
-        body: JSON.stringify(sticker),
+        body: JSON.stringify(setStickersText()),
         headers: {
             'Content-Type': 'application/json',
         },
     }).then((data) => {
         fetchList();
-        e.preventDefault();
     });
+}
+
+function setStickersText() {
+
 }
 
 function getStickerId(el) {
   return el.closest('.' + INPUT_STIKERS).dataset.id;
 }
 
-function generateStickersHTML(sticker) {
-    return stickersTemplate.replace('{{id}}', sticker.id)
-                            .replace('{{description}}', sticker.description);
+function generateStickersHTML(stickers) {
+    return stickersTemplate.replace('{{id}}', stickers.id)
+                            .replace('{{description}}', stickers.description);
 }
 
 function renderList() {
