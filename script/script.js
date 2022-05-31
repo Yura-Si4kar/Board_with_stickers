@@ -1,84 +1,100 @@
-const STIKERS_URL = 'https://5dd3d5ba8b5e080014dc4bfa.mockapi.io/stickers/';
-const DELETE_BTN_CLASS = 'stickers__close';
-const INPUT_STIKERS = 'stickers_input';
+$(() => {
+    const STIKERS_URL = 'https://5dd3d5ba8b5e080014dc4bfa.mockapi.io/stickers/';
 
-const stickersTemplate = document.querySelector('.stickers_template').innerHTML;
-const stickersBlock = document.querySelector('.stickers__block');
-const addButton = document.querySelector('.add_btn');
-const textArea = document.querySelector('.stickers__text');
+    const DELETE_BUTTON_CLASS = 'stickers__close';
+    const INPUT_STIKERS_CLASS = 'stickers__text';
 
-addButton.addEventListener('click', addNewStiker);
-document.addEventListener('focusout', saveNewStikersText);
-stickersBlock.addEventListener('click', onClickAction);
+    const stickersTemplate = $('#stickersTemplate').html();
+    const $stickersBlock = $('.stickers__block');
+    const $addButton = $('.add_btn');
 
-let stickersList = [];
+    let stickersList = [];
 
-init();
+    $addButton.on('click', addStickers);
+    $stickersBlock.on('click','.' + DELETE_BUTTON_CLASS, onCloseBtnClick);
+    $stickersBlock.on('focusout','.' + INPUT_STIKERS_CLASS, saveNewStikersText);
 
-function init() {
-    fetchList();
-}
+    init();
 
-function fetchList() {
+    function init() {
+        getData();
+    }
+
+    function getData() {
         fetch(STIKERS_URL)
         .then((res) => res.json())
         .then((data) => {
             stickersList = data;
-            renderList();        
-    })
-}
+            renderList(stickersList);        
+        })
+    }
 
-function addNewStiker(stickers) {
-   fetch(STIKERS_URL, {
-        method: 'POST',
-        body: JSON.stringify(stickers),
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    }).then((data) => {
-        fetchList();
-    });
-}
+    function addStickers() {
+        const stickers = {
+            description: '',
+        };
 
-function saveNewStikersText(e) {
-    id = getStickerId(e.target);
+        fetch(STIKERS_URL, {
+            method: 'POST',
+            body: JSON.stringify(stickers),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then((res) => res.json())
+        .then((stickers) => {
+            insertStickers(stickers);
+        });
+    }
+
+    function onCloseBtnClick(e) {
+        deleteStickers(e.target.parentElement.dataset.id);
+    }
+
+    function saveNewStikersText(e) {
+        const element = e.target;
+
+        updateStickers(
+            element.parentElement.dataset.id,
+            element.name,
+            element.value,
+        );
+    }
+
+    function updateStickers(id, name, value) {
+        const stickers = stickersList.find((el) => el.id == id);
+
+        stickers[name] = value;
 
         fetch(STIKERS_URL + id, {
-        method: 'PUT',
-        body: JSON.stringify(setStickersText()),
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    }).then((data) => {
-        fetchList();
-    });
-}
+            method: 'PUT',
+            body: JSON.stringify(stickers),
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+    }
 
-function setStickersText() {
+    function deleteStickers(id) {
+        stickersList = stickersList.filter((el) => el.id != id);
 
-}
-
-function getStickerId(el) {
-  return el.closest('.' + INPUT_STIKERS).dataset.id;
-}
-
-function generateStickersHTML(stickers) {
-    return stickersTemplate.replace('{{id}}', stickers.id)
-                            .replace('{{description}}', stickers.description);
-}
-
-function renderList() {
-    stickersBlock.innerHTML = stickersList.map(generateStickersHTML).join('\n');
-}
-
-function onClickAction(e) {
-  id = getStickerId(e.target);
-  
-  if(e.target.classList.contains(DELETE_BTN_CLASS)) {
         fetch(STIKERS_URL + id, {
             method: 'DELETE',
         }).then((data) => {
-            fetchList();
+            getData();
         });
-  }
-}
+    }
+    
+    function insertStickers(stickers) {
+        $stickersBlock.append(generateStickersHtml(stickers));
+    }
+
+    function renderList() {
+        $stickersBlock.html(stickersList.map(generateStickersHtml).join('\n'));
+    }
+
+    function generateStickersHtml(stickers) {
+        return stickersTemplate.replace('{{id}}', stickers.id)
+                                .replace('{{description}}', stickers.description);
+    }
+});
