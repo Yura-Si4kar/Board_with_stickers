@@ -1,5 +1,5 @@
 $(() => {
-    const STIKERS_URL = 'https://5dd3d5ba8b5e080014dc4bfa.mockapi.io/stickers/';
+    const STIKERS_URL = 'https://643684438205915d34f5a44a.mockapi.io/goods/';
 
     const DELETE_BUTTON_CLASS = 'stickers__close';
     const INPUT_STIKERS_CLASS = 'stickers__text';
@@ -49,26 +49,23 @@ $(() => {
 
     function onCloseBtnClick(e) {
         deleteStickers(e.target.parentElement.dataset.id);
+        $(this).parent().slideUp(3000);
     }
 
     function saveNewStikersText(e) {
-        const element = e.target;
+        const $element = $(e.target);
 
-        updateStickers(
-            element.parentElement.dataset.id,
-            element.name,
-            element.value,
-        );
+        updateStickers($element.parent().data('id'), $element.val());
     }
 
-    function updateStickers(id, name, value) {
+    function updateStickers(id, changes) {
         const stickers = stickersList.find((el) => el.id == id);
 
-        stickers[name] = value;
+        let newNote = { ...stickers, description: changes };
 
         fetch(STIKERS_URL + id, {
             method: 'PUT',
-            body: JSON.stringify(stickers),
+            body: JSON.stringify(newNote),
             headers: {
                 'Content-Type': 'application/json',
             }
@@ -76,12 +73,13 @@ $(() => {
     }
 
     function deleteStickers(id) {
+        let $el = stickersList.find((el) => el.id === id);
         stickersList = stickersList.filter((el) => el.id != id);
 
         fetch(STIKERS_URL + id, {
             method: 'DELETE',
-        }).then((data) => {
-            getData();
+        }).then(() => { 
+            renderList();
         });
     }
     
